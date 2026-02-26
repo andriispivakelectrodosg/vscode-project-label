@@ -5,6 +5,49 @@ All notable changes to the **Project Label** extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-02-26
+
+### Fixed
+
+- Buttons in Settings Panel webview were non-functional due to CSP blocking inline `onclick` handlers.
+- Replaced all inline event handlers with `data-command` attributes and `addEventListener` in nonce'd script block.
+
+## [0.4.0] - 2026-02-26
+
+### Added
+
+- **Settings Panel** — full webview UI with toggle switches, color picker, live preview, and action buttons. Open via `Project Label: Open Settings Panel` command.
+- **Sidebar Tree View** — Activity Bar panel (`$(bracket-dot)` icon) with quick toggles for all boolean settings, project info, and action shortcuts.
+- **Walkthrough** — 5-step "Get Started" guide (Help → Get Started → Project Label) covering display, appearance, title bar, and Copilot silence.
+- Official VS Code logo as extension icon.
+- Toggle commands for all boolean settings (`toggleShowProjectName`, `toggleShowProfile`, `toggleShowInStatusBar`, `toggleUpdateWindowTitle`, `toggleNativeTitleBar`, `toggleSilenceCopilot`).
+- Menu actions in sidebar title bar (settings gear, refresh).
+- Activation event `onView:projectLabelView` for sidebar.
+
+## [0.3.0] - 2026-02-26
+
+### Added
+
+- **Native Title Bar toggle** — `projectLabel.useNativeTitleBar` setting switches `window.titleBarStyle` between "native" and "custom". Required on Linux to see window title text. Prompts for restart.
+- Commands: `Project Label: Enable Native Title Bar (Linux)`, `Project Label: Restore Custom Title Bar`.
+- **Copilot Chat Silence** — `projectLabel.silenceCopilotChat` setting mutes 10 `accessibility.signals` related to GitHub Copilot Chat (chatRequestSent, chatResponseReceived, chatUserActionRequired, chatEditModifiedFile, editsKept, nextEditSuggestion, codeActionApplied, codeActionTriggered, clear, progress).
+- Commands: `Project Label: Silence Copilot Chat Sounds`, `Project Label: Restore Copilot Chat Sounds`.
+- Auto-applies silence setting on activation when enabled.
+
+## [0.2.0] - 2026-02-26
+
+### Added
+
+- Rich **Markdown tooltip** popup showing project name, full path, and profile name.
+- Changed default icon to `$(bracket-dot)`.
+- `projectLabel.showInStatusBar` — toggle status bar visibility independently.
+- `projectLabel.titleTemplate` — customizable window title template with `${label}` variable.
+
+### Changed
+
+- `projectLabel.updateWindowTitle` default changed to `true`.
+- Icon fallback in source updated to match `$(bracket-dot)` default.
+
 ## [0.1.0] - 2026-02-26
 
 ### Added
