@@ -5,10 +5,14 @@ import * as os from 'os';
 
 let statusBarItem: vscode.StatusBarItem;
 let cachedProfileName: string | undefined;
+let originalWindowTitle: string | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
     // Detect profile once at activation (profile doesn't change mid-session)
     cachedProfileName = detectProfileName(context);
+
+    // Remember original window title for clean restore on deactivate
+    originalWindowTitle = vscode.workspace.getConfiguration('window').get<string>('title');
 
     // Create status bar item based on current config
     statusBarItem = createStatusBarItem();
@@ -71,6 +75,14 @@ function getProjectName(): string {
         return folders[0].name;
     }
     return 'No Folder';
+}
+
+function getProjectPath(): string {
+    const folders = vscode.workspace.workspaceFolders;
+    if (folders && folders.length > 0) {
+        return folders[0].uri.fsPath;
+    }
+    return '';
 }
 
 /**
@@ -184,9 +196,21 @@ function updateLabel(): void {
         return;
     }
 
+    const showInStatusBar = config.get<boolean>('showInStatusBar', true);
+
     // Build display text with optional icon
     statusBarItem.text = icon ? `${icon} ${labelText}` : labelText;
-    statusBarItem.tooltip = `Project: ${getProjectName()}\nProfile: ${cachedProfileName ?? 'Default'}\n\nClick to copy`;
+
+    const projectPath = getProjectPath();
+    const tooltipMd = new vscode.MarkdownString('', true);
+    tooltipMd.isTrusted = true;
+    tooltipMd.appendMarkdown(`**Project:** ${getProjectName()}\n\n`);
+    if (projectPath) {
+        tooltipMd.appendMarkdown(`**Path:** \`${projectPath}\`\n\n`);
+    }
+    tooltipMd.appendMarkdown(`**Profile:** ${cachedProfileName ?? 'Default'}\n\n`);
+    tooltipMd.appendMarkdown('---\n\n*Click to copy label*');
+    statusBarItem.tooltip = tooltipMd;
 
     // Apply color — supports both hex (#rrggbb) and theme color tokens
     if (color) {
@@ -195,24 +219,35 @@ function updateLabel(): void {
         statusBarItem.color = undefined;
     }
 
-    statusBarItem.show();
+    if (showInStatusBar) {
+        statusBarItem.show();
+    } else {
+        statusBarItem.hide();
+    }
 
-    // Optionally prepend label to window title
+    // Update window title bar (displays near Help button in title bar)
     if (updateTitle) {
-        const currentTitle = vscode.workspace.getConfiguration('window').get<string>('title', '');
-        const prefix = `[${labelText}]`;
-        if (!currentTitle?.startsWith(prefix)) {
-            vscode.workspace.getConfiguration('window').update(
-                'title',
-                `${prefix} ${currentTitle}`,
-                vscode.ConfigurationTarget.Workspace
-            );
-        }
+        const template = config.get<string>('titleTemplate',
+            '[${label}] ${activeEditorShort}${separator}${rootName}');
+        const titleWithLabel = template.replace(/\$\{label\}/g, labelText);
+        vscode.workspace.getConfiguration('window').update(
+            'title',
+            titleWithLabel,
+            vscode.ConfigurationTarget.Workspace
+        );
     }
 }
 
 export function deactivate(): void {
     if (statusBarItem) {
         statusBarItem.dispose();
+    }
+    // Restore original window title
+    if (originalWindowTitle !== undefined) {
+        vscode.workspace.getConfiguration('window').update(
+            'title',
+            originalWindowTitle || undefined,
+            vscode.ConfigurationTarget.Workspace
+        );
     }
 }
