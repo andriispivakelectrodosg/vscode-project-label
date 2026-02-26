@@ -1,0 +1,99 @@
+{
+  "name": "project-label",
+  "displayName": "Project Label",
+  "description": "Display the current project name and/or VS Code profile in the title bar area.",
+  "version": "0.1.0",
+  "publisher": "narayanaya",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.109.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "project",
+    "profile",
+    "label",
+    "title",
+    "workspace"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Project Label",
+      "properties": {
+        "projectLabel.showProjectName": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the current project/workspace folder name."
+        },
+        "projectLabel.showProfile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the current VS Code profile name."
+        },
+        "projectLabel.separator": {
+          "type": "string",
+          "default": " | ",
+          "description": "Separator between project name and profile name."
+        },
+        "projectLabel.customLabel": {
+          "type": "string",
+          "default": "",
+          "description": "Override with a custom label. Leave empty to use auto-detected names."
+        },
+        "projectLabel.alignment": {
+          "type": "string",
+          "enum": ["left", "right"],
+          "default": "left",
+          "description": "Position of the label in the status bar."
+        },
+        "projectLabel.priority": {
+          "type": "number",
+          "default": 1000,
+          "description": "Priority (higher = more to the left)."
+        },
+        "projectLabel.color": {
+          "type": "string",
+          "default": "",
+          "description": "Label text color (e.g., '#b87333'). Leave empty for theme default."
+        },
+        "projectLabel.icon": {
+          "type": "string",
+          "default": "$(folder)",
+          "description": "Codicon icon before the label (e.g., '$(folder)', '$(account)'). Empty for no icon."
+        },
+        "projectLabel.updateWindowTitle": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also prepend the label to the window title bar."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "projectLabel.refresh",
+        "title": "Project Label: Refresh"
+      },
+      {
+        "command": "projectLabel.copyLabel",
+        "title": "Project Label: Copy Label to Clipboard"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.109.0",
+    "@vscode/vsce": "^3.7.1",
+    "typescript": "^5.9.3"
+  }
+}
