@@ -450,8 +450,8 @@ export class SettingsPanel {
   </div>
 
   <div class="btn-row">
-    <button onclick="runCommand('projectLabel.enableNativeTitleBar')">Enable Native Title Bar</button>
-    <button class="btn-secondary" onclick="runCommand('projectLabel.disableNativeTitleBar')">Restore Custom Title Bar</button>
+    <button data-command="projectLabel.enableNativeTitleBar">Enable Native Title Bar</button>
+    <button class="btn-secondary" data-command="projectLabel.disableNativeTitleBar">Restore Custom Title Bar</button>
   </div>
 </div>
 
@@ -473,8 +473,8 @@ export class SettingsPanel {
   </div>
 
   <div class="btn-row">
-    <button onclick="runCommand('projectLabel.silenceCopilot')">🔇 Silence Now</button>
-    <button class="btn-secondary" onclick="runCommand('projectLabel.unsilenceCopilot')">🔊 Restore Sounds</button>
+    <button data-command="projectLabel.silenceCopilot">🔇 Silence Now</button>
+    <button class="btn-secondary" data-command="projectLabel.unsilenceCopilot">🔊 Restore Sounds</button>
   </div>
 </div>
 
@@ -482,9 +482,9 @@ export class SettingsPanel {
 <div class="section">
   <h2>⚡ Actions</h2>
   <div class="btn-row">
-    <button onclick="runCommand('projectLabel.refresh')">🔄 Refresh Label</button>
-    <button onclick="runCommand('projectLabel.copyLabel')">📋 Copy Label</button>
-    <button class="btn-secondary" onclick="runCommand('workbench.action.openSettings', 'projectLabel')">Open JSON Settings</button>
+    <button data-command="projectLabel.refresh">🔄 Refresh Label</button>
+    <button data-command="projectLabel.copyLabel">📋 Copy Label</button>
+    <button class="btn-secondary" data-command="workbench.action.openSettings" data-args="projectLabel">Open JSON Settings</button>
   </div>
 </div>
 
@@ -593,6 +593,17 @@ export class SettingsPanel {
   document.getElementById('colorPicker').addEventListener('input', (e) => {
     document.getElementById('color').value = e.target.value;
     sendUpdate('color', e.target.value);
+  });
+
+  // Bind all buttons with data-command attribute
+  document.querySelectorAll('button[data-command]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cmd = btn.getAttribute('data-command');
+      const args = btn.getAttribute('data-args');
+      if (cmd) {
+        vscode.postMessage({ type: 'runCommand', command: cmd, args: args || undefined });
+      }
+    });
   });
 
   // Request initial settings
