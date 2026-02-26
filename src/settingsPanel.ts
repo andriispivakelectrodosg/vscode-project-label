@@ -88,6 +88,7 @@ export class SettingsPanel {
                     '[${label}] ${activeEditorShort}${separator}${rootName}'),
                 useNativeTitleBar: config.get<boolean>('useNativeTitleBar', false),
                 silenceCopilotChat: config.get<boolean>('silenceCopilotChat', false),
+                silenceAllSounds: config.get<boolean>('silenceAllSounds', false),
             },
         });
     }
@@ -111,17 +112,17 @@ export class SettingsPanel {
 <title>Project Label Settings</title>
 <style nonce="${nonce}">
   :root {
-    --bg: var(--vscode-editor-background);
-    --fg: var(--vscode-editor-foreground);
+    --bg: var(--vscode-editor-background, #1e1e1e);
+    --fg: var(--vscode-editor-foreground, #cccccc);
     --border: var(--vscode-panel-border, #444);
-    --input-bg: var(--vscode-input-background);
-    --input-fg: var(--vscode-input-foreground);
+    --input-bg: var(--vscode-input-background, #3c3c3c);
+    --input-fg: var(--vscode-input-foreground, #cccccc);
     --input-border: var(--vscode-input-border, #555);
-    --btn-bg: var(--vscode-button-background);
-    --btn-fg: var(--vscode-button-foreground);
-    --btn-hover: var(--vscode-button-hoverBackground);
-    --accent: var(--vscode-focusBorder);
-    --section-bg: var(--vscode-sideBar-background, var(--bg));
+    --btn-bg: var(--vscode-button-background, #0e639c);
+    --btn-fg: var(--vscode-button-foreground, #ffffff);
+    --btn-hover: var(--vscode-button-hoverBackground, #1177bb);
+    --accent: var(--vscode-focusBorder, #007fd4);
+    --section-bg: var(--vscode-sideBar-background, #252526);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -166,7 +167,7 @@ export class SettingsPanel {
     align-items: center;
     justify-content: space-between;
     padding: 8px 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--border) 30%, transparent);
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
   }
   .row:last-child { border-bottom: none; }
   .row-label {
@@ -190,7 +191,7 @@ export class SettingsPanel {
   .toggle .slider {
     position: absolute;
     inset: 0;
-    background: #f44336;
+    background: #f44336 !important;
     border-radius: 22px;
     transition: 0.25s;
   }
@@ -201,12 +202,12 @@ export class SettingsPanel {
     height: 16px;
     left: 3px;
     bottom: 3px;
-    background: #fff;
+    background: #fff !important;
     border-radius: 50%;
     transition: 0.25s;
   }
   .toggle input:checked + .slider {
-    background: #4caf50;
+    background: #4caf50 !important;
   }
   .toggle input:checked + .slider::before {
     transform: translateX(18px);
@@ -264,7 +265,7 @@ export class SettingsPanel {
     color: var(--fg);
   }
   .btn-secondary:hover {
-    background: color-mix(in srgb, var(--fg) 10%, transparent);
+    background: rgba(255, 255, 255, 0.08);
   }
 
   /* Live preview */
@@ -486,7 +487,29 @@ export class SettingsPanel {
   </div>
 
 </div>
+<!-- ── Sound Control Section ─────────────── -->
+<div class="section">
+  <h2>🔇 Sound Control</h2>
 
+  <div class="row">
+    <div class="row-label">
+      <span class="name">Silence ALL VS Code Sounds</span>
+      <span class="desc">Disable every accessibility sound signal in VS Code (editor, terminal, tasks, diff, notebook, etc.)</span>
+    </div>
+    <div class="row-control">
+      <label class="toggle">
+        <input type="checkbox" id="silenceAllSounds" data-key="silenceAllSounds">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="btn-row" style="margin-top:4px">
+    <button data-command="projectLabel.silenceAllSounds">🔇 Silence All Sounds</button>
+    <button class="btn-secondary" data-command="projectLabel.unsilenceAllSounds">🔊 Restore All Sounds</button>
+  </div>
+
+</div>
 <!-- ── Actions ──────────────────────── -->
 <div class="section">
   <h2>⚡ Actions</h2>
@@ -517,6 +540,7 @@ export class SettingsPanel {
     setCheck('updateWindowTitle', s.updateWindowTitle);
     setCheck('useNativeTitleBar', s.useNativeTitleBar);
     setCheck('silenceCopilotChat', s.silenceCopilotChat);
+    setCheck('silenceAllSounds', s.silenceAllSounds);
 
     setValue('customLabel', s.customLabel);
     setValue('separator', s.separator);

@@ -2,7 +2,7 @@
   "name": "project-label",
   "displayName": "Project Label",
   "description": "Display the current project name and/or VS Code profile in the title bar area.",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "publisher": "narayanaya",
   "license": "MIT",
   "icon": "icon.png",
@@ -93,6 +93,11 @@
           "type": "boolean",
           "default": false,
           "description": "Silence all GitHub Copilot Chat sound notifications (request sent, response received, action required, edit modified, edits kept, etc.)."
+        },
+        "projectLabel.silenceAllSounds": {
+          "type": "boolean",
+          "default": false,
+          "description": "Silence ALL VS Code accessibility sound signals (editor, terminal, tasks, diff, notebook, voice, Copilot, etc.)."
         }
       }
     },
@@ -149,6 +154,18 @@
       {
         "command": "projectLabel.toggleSilenceCopilot",
         "title": "Project Label: Toggle Silence Copilot"
+      },
+      {
+        "command": "projectLabel.silenceAllSounds",
+        "title": "Project Label: Silence All VS Code Sounds"
+      },
+      {
+        "command": "projectLabel.unsilenceAllSounds",
+        "title": "Project Label: Restore All VS Code Sounds"
+      },
+      {
+        "command": "projectLabel.toggleSilenceAllSounds",
+        "title": "Project Label: Toggle Silence All Sounds"
       }
     ],
     "viewsContainers": {

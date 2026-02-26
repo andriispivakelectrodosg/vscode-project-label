@@ -81,6 +81,14 @@ export class ProjectLabelTreeProvider implements vscode.TreeDataProvider<Setting
             { command: 'projectLabel.toggleSilenceCopilot', title: 'Toggle' }
         ));
 
+        // ── All Sounds ──
+        items.push(new SettingItem(
+            `Silence All Sounds: ${boolIcon(config.get('silenceAllSounds', false))}`,
+            'Mute ALL VS Code accessibility sounds',
+            'bell-slash',
+            { command: 'projectLabel.toggleSilenceAllSounds', title: 'Toggle' }
+        ));
+
         // ── Appearance ──
         const icon = config.get<string>('icon', '$(bracket-dot)');
         const color = config.get<string>('color', '');

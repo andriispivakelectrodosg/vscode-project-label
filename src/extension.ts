@@ -55,6 +55,12 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('projectLabel.unsilenceCopilot', async () => {
             await setCopilotChatSilence(false);
         }),
+        vscode.commands.registerCommand('projectLabel.silenceAllSounds', async () => {
+            await setSilenceAllSounds(true);
+        }),
+        vscode.commands.registerCommand('projectLabel.unsilenceAllSounds', async () => {
+            await setSilenceAllSounds(false);
+        }),
         // ── Settings Panel command ──
         vscode.commands.registerCommand('projectLabel.openSettings', () => {
             SettingsPanel.show(context.extensionUri);
@@ -77,6 +83,9 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
         vscode.commands.registerCommand('projectLabel.toggleSilenceCopilot', async () => {
             await toggleBoolSetting('silenceCopilotChat');
+        }),
+        vscode.commands.registerCommand('projectLabel.toggleSilenceAllSounds', async () => {
+            await toggleBoolSetting('silenceAllSounds');
         })
     );
 
@@ -85,6 +94,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Apply Copilot silence setting
     applyCopilotSilenceSetting();
+
+    // Apply silence all sounds setting
+    applySilenceAllSoundsSetting();
 
     // Recreate status bar item when alignment/priority changes
     context.subscriptions.push(
@@ -101,6 +113,9 @@ export function activate(context: vscode.ExtensionContext): void {
                 }
                 if (e.affectsConfiguration('projectLabel.silenceCopilotChat')) {
                     applyCopilotSilenceSetting();
+                }
+                if (e.affectsConfiguration('projectLabel.silenceAllSounds')) {
+                    applySilenceAllSoundsSetting();
                 }
                 updateLabel();
                 treeProvider.refresh();
@@ -413,6 +428,77 @@ async function setCopilotChatSilence(silent: boolean): Promise<void> {
         silent
             ? 'Copilot Chat sounds silenced.'
             : 'Copilot Chat sounds restored.'
+    );
+}
+
+// ── Silence ALL VS Code Sounds ──────────────────────────────────
+
+/** All accessibility.signals keys in VS Code */
+const ALL_SOUND_SIGNALS = [
+    // Copilot / Chat
+    'chatEditModifiedFile', 'chatRequestSent', 'chatResponseReceived',
+    'chatUserActionRequired', 'editsKept', 'nextEditSuggestion',
+    'codeActionApplied', 'codeActionTriggered', 'clear', 'progress',
+    // Editor
+    'lineHasBreakpoint', 'lineHasError', 'lineHasFoldedArea',
+    'lineHasInlineSuggestion', 'lineHasWarning', 'noInlayHints',
+    'onDebugBreak',
+    // Tasks
+    'taskCompleted', 'taskFailed',
+    // Terminal
+    'terminalBell', 'terminalCommandFailed', 'terminalCommandSucceeded',
+    'terminalQuickFix',
+    // Diff
+    'diffLineDeleted', 'diffLineInserted', 'diffLineModified',
+    // Notebook
+    'notebookCellCompleted', 'notebookCellFailed',
+    // Voice
+    'voiceRecordingStarted', 'voiceRecordingStopped',
+    // Save
+    'save', 'format',
+    // Position
+    'positionHasError', 'positionHasWarning',
+] as const;
+
+/**
+ * Apply the silenceAllSounds setting on activation or config change.
+ */
+async function applySilenceAllSoundsSetting(): Promise<void> {
+    const silence = vscode.workspace
+        .getConfiguration('projectLabel')
+        .get<boolean>('silenceAllSounds', false);
+
+    if (silence) {
+        await setSilenceAllSounds(true);
+    }
+}
+
+/**
+ * Set ALL VS Code accessibility signals to off or on.
+ */
+async function setSilenceAllSounds(silent: boolean): Promise<void> {
+    const signals = vscode.workspace.getConfiguration('accessibility.signals');
+    const value = { sound: silent ? 'off' : 'on' };
+
+    for (const key of ALL_SOUND_SIGNALS) {
+        try {
+            await signals.update(key, value, vscode.ConfigurationTarget.Global);
+        } catch {
+            // Signal may not exist in this VS Code version — skip silently
+        }
+    }
+
+    // Also sync our own setting
+    await vscode.workspace.getConfiguration('projectLabel').update(
+        'silenceAllSounds',
+        silent,
+        vscode.ConfigurationTarget.Global
+    );
+
+    vscode.window.showInformationMessage(
+        silent
+            ? '🔇 All VS Code sounds silenced.'
+            : '🔊 All VS Code sounds restored.'
     );
 }
 

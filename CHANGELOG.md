@@ -5,6 +5,21 @@ All notable changes to the **Project Label** extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-02-26
+
+### Added
+
+- **Silence ALL Sounds** — new setting, toggle, and buttons to mute/restore every VS Code accessibility sound signal (30+ signals: editor, terminal, tasks, diff, notebook, voice, Copilot, etc.).
+- New commands: `Silence All VS Code Sounds`, `Restore All VS Code Sounds`, `Toggle Silence All Sounds`.
+- Separate **Sound Control** section in Settings Panel with toggle + action buttons.
+- New quick toggle in sidebar tree view: `Silence All Sounds`.
+
+### Fixed
+
+- **Settings page background** — added solid color fallbacks for all CSS variables so the background renders correctly in webview.
+- **Toggle switch colors** — added `!important` to ensure green (#4caf50) ON and red (#f44336) OFF colors override webview defaults.
+- Replaced unsupported `color-mix()` CSS function with `rgba()` fallbacks for row borders and button hover.
+
 ## [0.4.2] - 2026-02-26
 
 ### Changed
