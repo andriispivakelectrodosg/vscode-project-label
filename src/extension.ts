@@ -30,8 +30,26 @@ export function activate(context: vscode.ExtensionContext): void {
                 await vscode.env.clipboard.writeText(label);
                 vscode.window.showInformationMessage(`Copied: "${label}"`);
             }
+        }),
+        vscode.commands.registerCommand('projectLabel.enableNativeTitleBar', async () => {
+            await setTitleBarStyle('native');
+        }),
+        vscode.commands.registerCommand('projectLabel.disableNativeTitleBar', async () => {
+            await setTitleBarStyle('custom');
+        }),
+        vscode.commands.registerCommand('projectLabel.silenceCopilot', async () => {
+            await setCopilotChatSilence(true);
+        }),
+        vscode.commands.registerCommand('projectLabel.unsilenceCopilot', async () => {
+            await setCopilotChatSilence(false);
         })
     );
+
+    // On first activation, check if user wants native title bar
+    applyNativeTitleBarSetting();
+
+    // Apply Copilot silence setting
+    applyCopilotSilenceSetting();
 
     // Recreate status bar item when alignment/priority changes
     context.subscriptions.push(
@@ -42,6 +60,12 @@ export function activate(context: vscode.ExtensionContext): void {
                     statusBarItem.dispose();
                     statusBarItem = createStatusBarItem();
                     context.subscriptions.push(statusBarItem);
+                }
+                if (e.affectsConfiguration('projectLabel.useNativeTitleBar')) {
+                    applyNativeTitleBarSetting();
+                }
+                if (e.affectsConfiguration('projectLabel.silenceCopilotChat')) {
+                    applyCopilotSilenceSetting();
                 }
                 updateLabel();
             }
@@ -185,9 +209,9 @@ function buildLabelText(): string {
 
 function updateLabel(): void {
     const config = vscode.workspace.getConfiguration('projectLabel');
-    const icon = config.get<string>('icon', '$(folder)');
+    const icon = config.get<string>('icon', '$(bracket-dot)');
     const color = config.get<string>('color', '');
-    const updateTitle = config.get<boolean>('updateWindowTitle', false);
+    const updateTitle = config.get<boolean>('updateWindowTitle', true);
 
     const labelText = buildLabelText();
 
@@ -236,6 +260,113 @@ function updateLabel(): void {
             vscode.ConfigurationTarget.Workspace
         );
     }
+}
+
+/**
+ * Apply the useNativeTitleBar setting.
+ * Sets window.titleBarStyle to "native" or "custom" and prompts for restart.
+ */
+async function applyNativeTitleBarSetting(): Promise<void> {
+    const config = vscode.workspace.getConfiguration('projectLabel');
+    const useNative = config.get<boolean>('useNativeTitleBar', false);
+    const currentStyle = vscode.workspace.getConfiguration('window').get<string>('titleBarStyle');
+
+    const targetStyle = useNative ? 'native' : 'custom';
+
+    if (currentStyle !== targetStyle) {
+        await vscode.workspace.getConfiguration('window').update(
+            'titleBarStyle',
+            targetStyle,
+            vscode.ConfigurationTarget.Global
+        );
+        const action = await vscode.window.showInformationMessage(
+            `Title bar style changed to "${targetStyle}". A restart is required for this to take effect.`,
+            'Restart Now',
+            'Later'
+        );
+        if (action === 'Restart Now') {
+            vscode.commands.executeCommand('workbench.action.reloadWindow');
+        }
+    }
+}
+
+/**
+ * Command helper to set title bar style directly.
+ */
+async function setTitleBarStyle(style: 'native' | 'custom'): Promise<void> {
+    // Also update our extension setting to stay in sync
+    await vscode.workspace.getConfiguration('projectLabel').update(
+        'useNativeTitleBar',
+        style === 'native',
+        vscode.ConfigurationTarget.Global
+    );
+    await vscode.workspace.getConfiguration('window').update(
+        'titleBarStyle',
+        style,
+        vscode.ConfigurationTarget.Global
+    );
+    const action = await vscode.window.showInformationMessage(
+        `Title bar style set to "${style}". A restart is required.`,
+        'Restart Now',
+        'Later'
+    );
+    if (action === 'Restart Now') {
+        vscode.commands.executeCommand('workbench.action.reloadWindow');
+    }
+}
+
+// ── Copilot Chat Silence ─────────────────────────────────────────
+
+/** All accessibility.signals keys related to GitHub Copilot Chat */
+const COPILOT_CHAT_SIGNALS = [
+    'chatEditModifiedFile',
+    'chatRequestSent',
+    'chatResponseReceived',
+    'chatUserActionRequired',
+    'editsKept',
+    'nextEditSuggestion',
+    'codeActionApplied',
+    'codeActionTriggered',
+    'clear',
+    'progress',
+] as const;
+
+/**
+ * Apply the silenceCopilotChat setting on activation or config change.
+ */
+async function applyCopilotSilenceSetting(): Promise<void> {
+    const silence = vscode.workspace
+        .getConfiguration('projectLabel')
+        .get<boolean>('silenceCopilotChat', false);
+
+    if (silence) {
+        await setCopilotChatSilence(true);
+    }
+}
+
+/**
+ * Set all Copilot Chat related accessibility signals to off or on.
+ */
+async function setCopilotChatSilence(silent: boolean): Promise<void> {
+    const signals = vscode.workspace.getConfiguration('accessibility.signals');
+    const value = { sound: silent ? 'off' : 'on' };
+
+    for (const key of COPILOT_CHAT_SIGNALS) {
+        await signals.update(key, value, vscode.ConfigurationTarget.Global);
+    }
+
+    // Also sync our own setting
+    await vscode.workspace.getConfiguration('projectLabel').update(
+        'silenceCopilotChat',
+        silent,
+        vscode.ConfigurationTarget.Global
+    );
+
+    vscode.window.showInformationMessage(
+        silent
+            ? 'Copilot Chat sounds silenced.'
+            : 'Copilot Chat sounds restored.'
+    );
 }
 
 export function deactivate(): void {

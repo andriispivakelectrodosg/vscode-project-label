@@ -2,7 +2,7 @@
   "name": "project-label",
   "displayName": "Project Label",
   "description": "Display the current project name and/or VS Code profile in the title bar area.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "narayanaya",
   "license": "MIT",
   "engines": {
@@ -81,6 +81,16 @@
           "type": "string",
           "default": "[${label}] ${activeEditorShort}${separator}${rootName}",
           "description": "Window title template. Use ${label} for the project label. Supports all VS Code title variables."
+        },
+        "projectLabel.useNativeTitleBar": {
+          "type": "boolean",
+          "default": false,
+          "description": "Switch to native OS title bar (required on Linux to see the window title). Requires VS Code restart."
+        },
+        "projectLabel.silenceCopilotChat": {
+          "type": "boolean",
+          "default": false,
+          "description": "Silence all GitHub Copilot Chat sound notifications (request sent, response received, action required, edit modified, edits kept, etc.)."
         }
       }
     },
@@ -92,6 +102,22 @@
       {
         "command": "projectLabel.copyLabel",
         "title": "Project Label: Copy Label to Clipboard"
+      },
+      {
+        "command": "projectLabel.enableNativeTitleBar",
+        "title": "Project Label: Enable Native Title Bar (Linux)"
+      },
+      {
+        "command": "projectLabel.disableNativeTitleBar",
+        "title": "Project Label: Restore Custom Title Bar"
+      },
+      {
+        "command": "projectLabel.silenceCopilot",
+        "title": "Project Label: Silence Copilot Chat Sounds"
+      },
+      {
+        "command": "projectLabel.unsilenceCopilot",
+        "title": "Project Label: Restore Copilot Chat Sounds"
       }
     ]
   },
