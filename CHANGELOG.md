@@ -5,6 +5,13 @@ All notable changes to the **Project Label** extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7] - 2026-02-26
+
+### Added
+
+- **Version badge** on settings page header showing current extension version.
+- **Latest changelog** section at the top of settings page, auto-extracted from CHANGELOG.md.
+
 ## [0.5.6] - 2026-02-26
 
 ### Fixed

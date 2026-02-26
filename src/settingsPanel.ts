@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class SettingsPanel {
     public static currentPanel: SettingsPanel | undefined;
@@ -163,6 +165,72 @@ export class SettingsPanel {
         this._panel.webview.postMessage({ type: 'signalStates', states });
     }
 
+    /** Read extension version from package.json */
+    private _getVersion(): string {
+        try {
+            const ext = vscode.extensions.getExtension('narayanaya.project-label');
+            if (ext) {
+                return ext.packageJSON.version as string;
+            }
+        } catch { /* ignore */ }
+        return '?';
+    }
+
+    /** Extract the latest changelog entry and return simple HTML */
+    private _getLatestChangelog(): string {
+        try {
+            // Look for CHANGELOG.md next to the compiled extension output
+            const ext = vscode.extensions.getExtension('narayanaya.project-label');
+            if (!ext) { return ''; }
+            const changelogPath = path.join(ext.extensionPath, 'changelog.md');
+            if (!fs.existsSync(changelogPath)) {
+                // Try uppercase variant
+                const alt = path.join(ext.extensionPath, 'CHANGELOG.md');
+                if (!fs.existsSync(alt)) { return ''; }
+                return this._parseLatestEntry(fs.readFileSync(alt, 'utf8'));
+            }
+            return this._parseLatestEntry(fs.readFileSync(changelogPath, 'utf8'));
+        } catch { return ''; }
+    }
+
+    /** Parse the first ## [...] section from a Keep-a-Changelog file */
+    private _parseLatestEntry(md: string): string {
+        // Find first "## [version]" line
+        const lines = md.split('\n');
+        let start = -1;
+        let end = lines.length;
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].startsWith('## [')) {
+                if (start === -1) { start = i; }
+                else { end = i; break; }
+            }
+        }
+        if (start === -1) { return ''; }
+
+        const section = lines.slice(start, end);
+        // Convert simple markdown to HTML
+        let html = '';
+        for (const line of section) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('## [')) {
+                // heading — extract version + date
+                const m = trimmed.match(/^## \[(.+?)\] - (.+)/);
+                if (m) { html += `<h4>📋 Latest changes — v${m[1]} (${m[2]})</h4>\n`; }
+            } else if (trimmed.startsWith('### ')) {
+                html += `<strong>${trimmed.replace('### ', '')}</strong>\n`;
+            } else if (trimmed.startsWith('- ')) {
+                // Convert **bold** to <b> tags
+                const item = trimmed.substring(2)
+                    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+                    .replace(/`(.+?)`/g, '<code>$1</code>');
+                html += `<li>${item}</li>\n`;
+            }
+        }
+        // Wrap consecutive <li> in <ul>
+        html = html.replace(/(<li>[\s\S]*?<\/li>\n)(?!<li>)/g, '<ul>$1</ul>\n');
+        return html;
+    }
+
     private _update(): void {
         this._panel.title = 'Project Label Settings';
         this._panel.webview.html = this._getHtml();
@@ -172,6 +240,8 @@ export class SettingsPanel {
 
     private _getHtml(): string {
         const nonce = getNonce();
+        const version = this._getVersion();
+        const changelog = this._getLatestChangelog();
         return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -342,12 +412,50 @@ export class SettingsPanel {
     font-size: 0.95em;
     margin-top: 8px;
   }
+
+  /* Version & changelog */
+  .version-badge {
+    display: inline-block;
+    background: var(--accent, #007fd4);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.82em;
+    font-weight: 600;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .changelog-section {
+    background: var(--vscode-textBlockQuote-background, rgba(127,127,127,.1));
+    border-left: 3px solid var(--accent, #007fd4);
+    padding: 10px 14px;
+    margin: 10px 0 16px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.9em;
+    line-height: 1.5;
+  }
+  .changelog-section h4 {
+    margin: 0 0 4px 0;
+    font-size: 0.95em;
+    opacity: 0.85;
+  }
+  .changelog-section ul {
+    margin: 4px 0;
+    padding-left: 18px;
+  }
+  .changelog-section li {
+    margin-bottom: 3px;
+  }
 </style>
 </head>
 <body>
 
-<h1><span class="icon">⚙️</span> Project Label Settings</h1>
+<h1><span class="icon">⚙️</span> Project Label Settings <span class="version-badge">v${version}</span></h1>
 <p class="subtitle">Configure how project name and profile are displayed in VS Code</p>
+
+<div class="changelog-section">
+${changelog}
+</div>
 
 <!-- ── Display Section ──────────────── -->
 <div class="section">
