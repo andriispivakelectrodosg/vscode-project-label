@@ -2,7 +2,7 @@
   "name": "project-label",
   "displayName": "Project Label",
   "description": "Display the current project name and/or VS Code profile in the title bar area.",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "publisher": "narayanaya",
   "license": "MIT",
   "icon": "icon.png",

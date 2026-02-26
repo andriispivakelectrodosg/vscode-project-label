@@ -47,6 +47,18 @@ export class SettingsPanel {
                         vscode.commands.executeCommand(msg.command);
                         break;
                     }
+                    case 'updateSignal': {
+                        const signals = vscode.workspace.getConfiguration('accessibility.signals');
+                        const val = { sound: msg.value ? 'off' : 'on' };
+                        try {
+                            await signals.update(msg.signal, val, vscode.ConfigurationTarget.Global);
+                        } catch { /* signal may not exist */ }
+                        break;
+                    }
+                    case 'requestSignals': {
+                        this._sendSignalStates();
+                        break;
+                    }
                     case 'requestSettings': {
                         this._sendCurrentSettings();
                         break;
@@ -62,6 +74,9 @@ export class SettingsPanel {
             (e) => {
                 if (e.affectsConfiguration('projectLabel')) {
                     this._sendCurrentSettings();
+                }
+                if (e.affectsConfiguration('accessibility.signals')) {
+                    this._sendSignalStates();
                 }
             },
             null,
@@ -87,10 +102,34 @@ export class SettingsPanel {
                 titleTemplate: config.get<string>('titleTemplate',
                     '[${label}] ${activeEditorShort}${separator}${rootName}'),
                 useNativeTitleBar: config.get<boolean>('useNativeTitleBar', false),
-                silenceCopilotChat: config.get<boolean>('silenceCopilotChat', false),
                 silenceAllSounds: config.get<boolean>('silenceAllSounds', false),
             },
         });
+        this._sendSignalStates();
+    }
+
+    private _sendSignalStates(): void {
+        const signals = vscode.workspace.getConfiguration('accessibility.signals');
+        const ALL_SIGNALS = [
+            'chatEditModifiedFile', 'chatRequestSent', 'chatResponseReceived',
+            'chatUserActionRequired', 'editsKept', 'nextEditSuggestion',
+            'codeActionApplied', 'codeActionTriggered', 'clear', 'progress',
+            'lineHasBreakpoint', 'lineHasError', 'lineHasFoldedArea',
+            'lineHasInlineSuggestion', 'lineHasWarning', 'noInlayHints',
+            'onDebugBreak', 'taskCompleted', 'taskFailed',
+            'terminalBell', 'terminalCommandFailed', 'terminalCommandSucceeded',
+            'terminalQuickFix', 'diffLineDeleted', 'diffLineInserted',
+            'diffLineModified', 'notebookCellCompleted', 'notebookCellFailed',
+            'voiceRecordingStarted', 'voiceRecordingStopped',
+            'save', 'format', 'positionHasError', 'positionHasWarning',
+        ];
+        const states: Record<string, boolean> = {};
+        for (const key of ALL_SIGNALS) {
+            const val = signals.get<{ sound?: string }>(key);
+            // checked = muted (sound === 'off')
+            states[key] = val?.sound === 'off';
+        }
+        this._panel.webview.postMessage({ type: 'signalStates', states });
     }
 
     private _update(): void {
@@ -249,6 +288,16 @@ export class SettingsPanel {
   .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.08);
   }
+
+  .sound-group {
+    font-size: 0.95em;
+    margin: 12px 0 4px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+    opacity: 0.85;
+  }
+  .sound-group:first-of-type { margin-top: 8px; }
+  .signal-cb { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
 
   /* Live preview */
   .preview-bar {
@@ -436,35 +485,69 @@ export class SettingsPanel {
 
 </div>
 
-<!-- ── Copilot Section ──────────────── -->
-<div class="section">
-  <h2>🤖 GitHub Copilot</h2>
-
-  <div class="row">
-    <div class="row-label">
-      <span class="name">Silence Copilot Chat Sounds</span>
-      <span class="desc">Mute all GitHub Copilot Chat accessibility sound notifications</span>
-    </div>
-    <div class="row-control">
-      <input type="checkbox" id="silenceCopilotChat" data-key="silenceCopilotChat">
-    </div>
-  </div>
-
-</div>
 <!-- ── Sound Control Section ─────────────── -->
 <div class="section">
   <h2>🔇 Sound Control</h2>
 
-  <div class="row">
+  <div class="row" style="border-bottom: 2px solid var(--accent, #007fd4); padding-bottom: 10px; margin-bottom: 6px;">
     <div class="row-label">
-      <span class="name">Silence ALL VS Code Sounds</span>
-      <span class="desc">Disable every accessibility sound signal in VS Code (editor, terminal, tasks, diff, notebook, etc.)</span>
+      <span class="name">✅ Silence ALL Sounds</span>
+      <span class="desc">Master switch — mute/unmute every sound signal at once</span>
     </div>
     <div class="row-control">
       <input type="checkbox" id="silenceAllSounds" data-key="silenceAllSounds">
     </div>
   </div>
 
+  <h3 class="sound-group">🤖 Copilot / Chat</h3>
+  <div class="row"><div class="row-label"><span class="name">Chat Request Sent</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="chatRequestSent"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Chat Response Received</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="chatResponseReceived"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Chat User Action Required</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="chatUserActionRequired"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Chat Edit Modified File</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="chatEditModifiedFile"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Edits Kept</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="editsKept"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Next Edit Suggestion</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="nextEditSuggestion"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Code Action Applied</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="codeActionApplied"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Code Action Triggered</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="codeActionTriggered"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Clear</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="clear"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Progress</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="progress"></div></div>
+
+  <h3 class="sound-group">✏️ Editor</h3>
+  <div class="row"><div class="row-label"><span class="name">Line Has Error</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="lineHasError"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Line Has Warning</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="lineHasWarning"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Line Has Breakpoint</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="lineHasBreakpoint"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Line Has Folded Area</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="lineHasFoldedArea"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Line Has Inline Suggestion</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="lineHasInlineSuggestion"></div></div>
+  <div class="row"><div class="row-label"><span class="name">No Inlay Hints</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="noInlayHints"></div></div>
+  <div class="row"><div class="row-label"><span class="name">On Debug Break</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="onDebugBreak"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Position Has Error</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="positionHasError"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Position Has Warning</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="positionHasWarning"></div></div>
+
+  <h3 class="sound-group">✅ Tasks</h3>
+  <div class="row"><div class="row-label"><span class="name">Task Completed</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="taskCompleted"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Task Failed</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="taskFailed"></div></div>
+
+  <h3 class="sound-group">💻 Terminal</h3>
+  <div class="row"><div class="row-label"><span class="name">Terminal Bell</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="terminalBell"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Terminal Command Failed</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="terminalCommandFailed"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Terminal Command Succeeded</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="terminalCommandSucceeded"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Terminal Quick Fix</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="terminalQuickFix"></div></div>
+
+  <h3 class="sound-group">🔀 Diff</h3>
+  <div class="row"><div class="row-label"><span class="name">Diff Line Deleted</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="diffLineDeleted"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Diff Line Inserted</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="diffLineInserted"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Diff Line Modified</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="diffLineModified"></div></div>
+
+  <h3 class="sound-group">📓 Notebook</h3>
+  <div class="row"><div class="row-label"><span class="name">Notebook Cell Completed</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="notebookCellCompleted"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Notebook Cell Failed</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="notebookCellFailed"></div></div>
+
+  <h3 class="sound-group">🎤 Voice</h3>
+  <div class="row"><div class="row-label"><span class="name">Voice Recording Started</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="voiceRecordingStarted"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Voice Recording Stopped</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="voiceRecordingStopped"></div></div>
+
+  <h3 class="sound-group">💾 Save / Format</h3>
+  <div class="row"><div class="row-label"><span class="name">Save</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="save"></div></div>
+  <div class="row"><div class="row-label"><span class="name">Format</span></div><div class="row-control"><input type="checkbox" class="signal-cb" data-signal="format"></div></div>
 
 </div>
 <!-- ── Actions ──────────────────────── -->
@@ -488,6 +571,9 @@ export class SettingsPanel {
       currentSettings = msg.settings;
       applySettings(msg.settings);
     }
+    if (msg.type === 'signalStates') {
+      applySignalStates(msg.states);
+    }
   });
 
   function applySettings(s) {
@@ -496,7 +582,6 @@ export class SettingsPanel {
     setCheck('showInStatusBar', s.showInStatusBar);
     setCheck('updateWindowTitle', s.updateWindowTitle);
     setCheck('useNativeTitleBar', s.useNativeTitleBar);
-    setCheck('silenceCopilotChat', s.silenceCopilotChat);
     setCheck('silenceAllSounds', s.silenceAllSounds);
 
     setValue('customLabel', s.customLabel);
@@ -559,6 +644,22 @@ export class SettingsPanel {
       sendUpdate(el.dataset.key, el.checked);
     });
   });
+
+  // Bind individual signal checkboxes
+  document.querySelectorAll('.signal-cb').forEach(el => {
+    el.addEventListener('change', () => {
+      vscode.postMessage({ type: 'updateSignal', signal: el.dataset.signal, value: el.checked });
+    });
+  });
+
+  function applySignalStates(states) {
+    document.querySelectorAll('.signal-cb').forEach(el => {
+      const key = el.dataset.signal;
+      if (key && states[key] !== undefined) {
+        el.checked = states[key];
+      }
+    });
+  }
 
   // Bind text/number inputs (debounced)
   let debounceTimers = {};

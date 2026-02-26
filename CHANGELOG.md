@@ -5,6 +5,23 @@ All notable changes to the **Project Label** extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-02-26
+
+### Added
+
+- **Individual sound signal controls** — settings panel now shows every `accessibility.signals.*` key grouped by category (Copilot/Chat, Editor, Tasks, Terminal, Diff, Notebook, Voice, Save/Format).
+- **Master "Silence ALL Sounds" checkbox** at the top of the Sound Control section with a visual separator.
+- Real-time sync: toggling any individual signal checkbox writes directly to `accessibility.signals.<key>.sound`.
+
+### Changed
+
+- Merged old separate "GitHub Copilot" and "Sound Control" sections into a single unified **Sound Control** section.
+- `toggleSilenceAllSounds` command now calls `setSilenceAllSounds()` directly instead of `toggleBoolSetting()`, fixing the "not a registered configuration" error.
+
+### Removed
+
+- Removed standalone "Silence Copilot Chat Sounds" checkbox (individual Copilot signals now available in the grouped list).
+
 ## [0.5.2] - 2026-02-26
 
 ### Added
