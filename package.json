@@ -2,9 +2,10 @@
   "name": "project-label",
   "displayName": "Project Label",
   "description": "Display the current project name and/or VS Code profile in the title bar area.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "narayanaya",
   "license": "MIT",
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.109.0"
   },
@@ -19,7 +20,8 @@
     "workspace"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onView:projectLabelView"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -118,6 +120,116 @@
       {
         "command": "projectLabel.unsilenceCopilot",
         "title": "Project Label: Restore Copilot Chat Sounds"
+      },
+      {
+        "command": "projectLabel.openSettings",
+        "title": "Project Label: Open Settings Panel",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "projectLabel.toggleShowProjectName",
+        "title": "Project Label: Toggle Show Project Name"
+      },
+      {
+        "command": "projectLabel.toggleShowProfile",
+        "title": "Project Label: Toggle Show Profile"
+      },
+      {
+        "command": "projectLabel.toggleShowInStatusBar",
+        "title": "Project Label: Toggle Show in Status Bar"
+      },
+      {
+        "command": "projectLabel.toggleUpdateWindowTitle",
+        "title": "Project Label: Toggle Update Window Title"
+      },
+      {
+        "command": "projectLabel.toggleNativeTitleBar",
+        "title": "Project Label: Toggle Native Title Bar"
+      },
+      {
+        "command": "projectLabel.toggleSilenceCopilot",
+        "title": "Project Label: Toggle Silence Copilot"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "projectLabelContainer",
+          "title": "Project Label",
+          "icon": "$(bracket-dot)"
+        }
+      ]
+    },
+    "views": {
+      "projectLabelContainer": [
+        {
+          "id": "projectLabelView",
+          "name": "Settings & Info",
+          "type": "tree"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "projectLabel.openSettings",
+          "when": "view == projectLabelView",
+          "group": "navigation"
+        },
+        {
+          "command": "projectLabel.refresh",
+          "when": "view == projectLabelView",
+          "group": "navigation"
+        }
+      ]
+    },
+    "walkthroughs": [
+      {
+        "id": "projectLabel.getStarted",
+        "title": "Get Started with Project Label",
+        "description": "Set up your project label, customize appearance, and configure advanced features.",
+        "steps": [
+          {
+            "id": "projectLabel.step.welcome",
+            "title": "Welcome to Project Label",
+            "description": "Project Label shows your workspace name and VS Code profile in the status bar and title bar.\n\n[Open Settings Panel](command:projectLabel.openSettings)",
+            "media": {
+              "markdown": "media/walkthrough-welcome.md"
+            }
+          },
+          {
+            "id": "projectLabel.step.display",
+            "title": "Configure Display",
+            "description": "Choose what to show: project name, profile, or a custom label.\n\n[Toggle Project Name](command:projectLabel.toggleShowProjectName)\n[Toggle Profile](command:projectLabel.toggleShowProfile)",
+            "media": {
+              "markdown": "media/walkthrough-display.md"
+            }
+          },
+          {
+            "id": "projectLabel.step.appearance",
+            "title": "Customize Appearance",
+            "description": "Change the icon, color, and position of your label in the status bar.\n\n[Open Settings Panel](command:projectLabel.openSettings)",
+            "media": {
+              "markdown": "media/walkthrough-appearance.md"
+            }
+          },
+          {
+            "id": "projectLabel.step.titlebar",
+            "title": "Title Bar Setup (Linux)",
+            "description": "On Linux, enable the native title bar to see the window title text.\n\n[Enable Native Title Bar](command:projectLabel.enableNativeTitleBar)",
+            "media": {
+              "markdown": "media/walkthrough-titlebar.md"
+            }
+          },
+          {
+            "id": "projectLabel.step.copilot",
+            "title": "Silence Copilot Chat",
+            "description": "Mute all GitHub Copilot Chat accessibility sounds with one click.\n\n[Silence Copilot](command:projectLabel.silenceCopilot)\n[Restore Sounds](command:projectLabel.unsilenceCopilot)",
+            "media": {
+              "markdown": "media/walkthrough-copilot.md"
+            }
+          }
+        ]
       }
     ]
   },

@@ -2,10 +2,13 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import { SettingsPanel } from './settingsPanel';
+import { ProjectLabelTreeProvider } from './treeViewProvider';
 
 let statusBarItem: vscode.StatusBarItem;
 let cachedProfileName: string | undefined;
 let originalWindowTitle: string | undefined;
+let treeProvider: ProjectLabelTreeProvider;
 
 export function activate(context: vscode.ExtensionContext): void {
     // Detect profile once at activation (profile doesn't change mid-session)
@@ -18,11 +21,20 @@ export function activate(context: vscode.ExtensionContext): void {
     statusBarItem = createStatusBarItem();
     context.subscriptions.push(statusBarItem);
 
+    // ── Tree View Sidebar ──
+    treeProvider = new ProjectLabelTreeProvider();
+    const treeView = vscode.window.createTreeView('projectLabelView', {
+        treeDataProvider: treeProvider,
+        showCollapseAll: false,
+    });
+    context.subscriptions.push(treeView);
+
     // Register commands
     context.subscriptions.push(
         vscode.commands.registerCommand('projectLabel.refresh', () => {
             cachedProfileName = detectProfileName(context);
             updateLabel();
+            treeProvider.refresh();
         }),
         vscode.commands.registerCommand('projectLabel.copyLabel', async () => {
             const label = buildLabelText();
@@ -42,6 +54,29 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
         vscode.commands.registerCommand('projectLabel.unsilenceCopilot', async () => {
             await setCopilotChatSilence(false);
+        }),
+        // ── Settings Panel command ──
+        vscode.commands.registerCommand('projectLabel.openSettings', () => {
+            SettingsPanel.show(context.extensionUri);
+        }),
+        // ── Toggle commands for tree view ──
+        vscode.commands.registerCommand('projectLabel.toggleShowProjectName', async () => {
+            await toggleBoolSetting('showProjectName');
+        }),
+        vscode.commands.registerCommand('projectLabel.toggleShowProfile', async () => {
+            await toggleBoolSetting('showProfile');
+        }),
+        vscode.commands.registerCommand('projectLabel.toggleShowInStatusBar', async () => {
+            await toggleBoolSetting('showInStatusBar');
+        }),
+        vscode.commands.registerCommand('projectLabel.toggleUpdateWindowTitle', async () => {
+            await toggleBoolSetting('updateWindowTitle');
+        }),
+        vscode.commands.registerCommand('projectLabel.toggleNativeTitleBar', async () => {
+            await toggleBoolSetting('useNativeTitleBar');
+        }),
+        vscode.commands.registerCommand('projectLabel.toggleSilenceCopilot', async () => {
+            await toggleBoolSetting('silenceCopilotChat');
         })
     );
 
@@ -68,6 +103,7 @@ export function activate(context: vscode.ExtensionContext): void {
                     applyCopilotSilenceSetting();
                 }
                 updateLabel();
+                treeProvider.refresh();
             }
         })
     );
@@ -313,6 +349,17 @@ async function setTitleBarStyle(style: 'native' | 'custom'): Promise<void> {
     if (action === 'Restart Now') {
         vscode.commands.executeCommand('workbench.action.reloadWindow');
     }
+}
+
+// ── Toggle Helper ────────────────────────────────────────────────
+
+/**
+ * Toggle a boolean setting under projectLabel.* and refresh tree view.
+ */
+async function toggleBoolSetting(key: string): Promise<void> {
+    const config = vscode.workspace.getConfiguration('projectLabel');
+    const current = config.get<boolean>(key, false);
+    await config.update(key, !current, vscode.ConfigurationTarget.Global);
 }
 
 // ── Copilot Chat Silence ─────────────────────────────────────────
