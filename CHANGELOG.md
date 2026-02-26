@@ -5,6 +5,14 @@ All notable changes to the **Project Label** extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.5] - 2026-02-26
+
+### Fixed
+
+- **Random checkbox flickering** — debounced `_sendSignalStates()` (300ms) so it fires once after all 30+ signal updates settle, instead of 30+ intermediate partial broadcasts.
+- **Status bar toggle not working** — now reads actual `accessibility.signals` state as ground truth instead of `projectLabel.silenceAllSounds` config (which could fail to persist).
+- **Master checkbox fighting with signal states** — removed `silenceAllSounds` from `applySettings()` so the master checkbox is only driven by actual signal states.
+
 ## [0.5.4] - 2026-02-26
 
 ### Fixed

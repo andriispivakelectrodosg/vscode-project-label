@@ -60,8 +60,8 @@ export class SettingsPanel {
                             ? 'projectLabel.silenceAllSounds'
                             : 'projectLabel.unsilenceAllSounds';
                         await vscode.commands.executeCommand(cmd);
-                        // After the command updates all signals, push new states to webview
-                        this._sendSignalStates();
+                        // The debounced config-change listener will send
+                        // final states once all 30+ updates settle.
                         break;
                     }
                     case 'requestSignals': {
@@ -117,23 +117,40 @@ export class SettingsPanel {
         this._sendSignalStates();
     }
 
+    private static readonly ALL_SIGNALS = [
+        'chatEditModifiedFile', 'chatRequestSent', 'chatResponseReceived',
+        'chatUserActionRequired', 'editsKept', 'nextEditSuggestion',
+        'codeActionApplied', 'codeActionTriggered', 'clear', 'progress',
+        'lineHasBreakpoint', 'lineHasError', 'lineHasFoldedArea',
+        'lineHasInlineSuggestion', 'lineHasWarning', 'noInlayHints',
+        'onDebugBreak', 'taskCompleted', 'taskFailed',
+        'terminalBell', 'terminalCommandFailed', 'terminalCommandSucceeded',
+        'terminalQuickFix', 'diffLineDeleted', 'diffLineInserted',
+        'diffLineModified', 'notebookCellCompleted', 'notebookCellFailed',
+        'voiceRecordingStarted', 'voiceRecordingStopped',
+        'save', 'format', 'positionHasError', 'positionHasWarning',
+    ];
+
+    private _signalDebounce: ReturnType<typeof setTimeout> | undefined;
+
+    /**
+     * Debounced: waits 300ms after the last call before actually reading
+     * and posting signal states.  This prevents 30+ intermediate broadcasts
+     * when setSilenceAllSounds() loops through every signal.
+     */
     private _sendSignalStates(): void {
+        if (this._signalDebounce) {
+            clearTimeout(this._signalDebounce);
+        }
+        this._signalDebounce = setTimeout(() => {
+            this._doSendSignalStates();
+        }, 300);
+    }
+
+    private _doSendSignalStates(): void {
         const signals = vscode.workspace.getConfiguration('accessibility.signals');
-        const ALL_SIGNALS = [
-            'chatEditModifiedFile', 'chatRequestSent', 'chatResponseReceived',
-            'chatUserActionRequired', 'editsKept', 'nextEditSuggestion',
-            'codeActionApplied', 'codeActionTriggered', 'clear', 'progress',
-            'lineHasBreakpoint', 'lineHasError', 'lineHasFoldedArea',
-            'lineHasInlineSuggestion', 'lineHasWarning', 'noInlayHints',
-            'onDebugBreak', 'taskCompleted', 'taskFailed',
-            'terminalBell', 'terminalCommandFailed', 'terminalCommandSucceeded',
-            'terminalQuickFix', 'diffLineDeleted', 'diffLineInserted',
-            'diffLineModified', 'notebookCellCompleted', 'notebookCellFailed',
-            'voiceRecordingStarted', 'voiceRecordingStopped',
-            'save', 'format', 'positionHasError', 'positionHasWarning',
-        ];
         const states: Record<string, boolean> = {};
-        for (const key of ALL_SIGNALS) {
+        for (const key of SettingsPanel.ALL_SIGNALS) {
             const val = signals.get<{ sound?: string }>(key);
             // checked = muted (sound === 'off')
             states[key] = val?.sound === 'off';
@@ -591,7 +608,9 @@ export class SettingsPanel {
     setCheck('showInStatusBar', s.showInStatusBar);
     setCheck('updateWindowTitle', s.updateWindowTitle);
     setCheck('useNativeTitleBar', s.useNativeTitleBar);
-    setCheck('silenceAllSounds', s.silenceAllSounds);
+    // Master "Silence ALL" checkbox is driven by signal states only
+    // (see applySignalStates / syncMasterCheckbox) — do NOT set it here
+    // to avoid fighting with the debounced signal state broadcast.
 
     setValue('customLabel', s.customLabel);
     setValue('separator', s.separator);

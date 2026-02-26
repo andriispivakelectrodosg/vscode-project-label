@@ -92,9 +92,15 @@ export function activate(context: vscode.ExtensionContext): void {
             await toggleBoolSetting('silenceCopilotChat');
         }),
         vscode.commands.registerCommand('projectLabel.toggleSilenceAllSounds', async () => {
-            const current = vscode.workspace.getConfiguration('projectLabel')
-                .get<boolean>('silenceAllSounds', false);
-            await setSilenceAllSounds(!current);
+            // Use actual signal state as ground truth instead of
+            // projectLabel.silenceAllSounds (which may fail to persist).
+            let currentlySilent = false;
+            try {
+                const sig = vscode.workspace.getConfiguration('accessibility.signals');
+                const sample = sig.get<{ sound?: string }>('chatResponseReceived');
+                currentlySilent = sample?.sound === 'off';
+            } catch { /* ignore */ }
+            await setSilenceAllSounds(!currentlySilent);
         })
     );
 
