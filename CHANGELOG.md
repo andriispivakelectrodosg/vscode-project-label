@@ -5,6 +5,15 @@ All notable changes to the **Project Label** extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-02-26
+
+### Fixed
+
+- **Broken `setCheck` function** — previous edit mangled the function definition, preventing settings from loading into the panel.
+- **Removed redundant Sound Control buttons** — toggle already reflects and controls the state; static buttons were confusing.
+- **Background fills entire viewport** — `html` and `body` now use `min-height: 100vh` so background covers the full webview.
+- **Toggle colors applied via inline JS** — immune to VS Code webview style injection. Green (#4caf50) ON, red (#f44336) OFF now guaranteed visible.
+
 ## [0.5.0] - 2026-02-26
 
 ### Added

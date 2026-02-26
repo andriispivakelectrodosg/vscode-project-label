@@ -125,6 +125,11 @@ export class SettingsPanel {
     --section-bg: var(--vscode-sideBar-background, #252526);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html {
+    min-height: 100vh;
+    width: 100%;
+    background: var(--bg);
+  }
   body {
     font-family: var(--vscode-font-family, system-ui);
     font-size: var(--vscode-font-size, 13px);
@@ -132,6 +137,8 @@ export class SettingsPanel {
     background: var(--bg);
     padding: 20px 32px;
     line-height: 1.5;
+    min-height: 100vh;
+    width: 100%;
   }
   h1 {
     font-size: 1.6em;
@@ -183,17 +190,18 @@ export class SettingsPanel {
   /* Toggle switch */
   .toggle {
     position: relative;
+    display: inline-block;
     width: 40px;
     height: 22px;
     cursor: pointer;
+    flex-shrink: 0;
   }
-  .toggle input { display: none; }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
   .toggle .slider {
     position: absolute;
     inset: 0;
-    background: #f44336 !important;
     border-radius: 22px;
-    transition: 0.25s;
+    transition: background 0.25s;
   }
   .toggle .slider::before {
     content: '';
@@ -202,12 +210,8 @@ export class SettingsPanel {
     height: 16px;
     left: 3px;
     bottom: 3px;
-    background: #fff !important;
     border-radius: 50%;
-    transition: 0.25s;
-  }
-  .toggle input:checked + .slider {
-    background: #4caf50 !important;
+    transition: transform 0.25s;
   }
   .toggle input:checked + .slider::before {
     transform: translateX(18px);
@@ -504,10 +508,6 @@ export class SettingsPanel {
     </div>
   </div>
 
-  <div class="btn-row" style="margin-top:4px">
-    <button data-command="projectLabel.silenceAllSounds">🔇 Silence All Sounds</button>
-    <button class="btn-secondary" data-command="projectLabel.unsilenceAllSounds">🔊 Restore All Sounds</button>
-  </div>
 
 </div>
 <!-- ── Actions ──────────────────────── -->
@@ -557,6 +557,7 @@ export class SettingsPanel {
     }
 
     updatePreview(s);
+    applyToggleColors();
   }
 
   function setCheck(id, val) {
@@ -596,12 +597,37 @@ export class SettingsPanel {
     vscode.postMessage({ type: 'runCommand', command: cmd });
   }
 
+  // ── Apply toggle colors via inline styles (immune to VS Code webview overrides) ──
+  function applyToggleColors() {
+    document.querySelectorAll('.toggle').forEach(label => {
+      const input = label.querySelector('input[type="checkbox"]');
+      const slider = label.querySelector('.slider');
+      if (!input || !slider) return;
+      slider.style.background = input.checked ? '#4caf50' : '#f44336';
+      slider.style.setProperty('background', input.checked ? '#4caf50' : '#f44336', 'important');
+      // Style the knob via ::before — can't do inline, so use outline trick
+      // Actually set a CSS custom property and use it
+    });
+    // Force knob color via a dynamic style tag
+    let knobStyle = document.getElementById('toggle-knob-style');
+    if (!knobStyle) {
+      knobStyle = document.createElement('style');
+      knobStyle.id = 'toggle-knob-style';
+      document.head.appendChild(knobStyle);
+    }
+    knobStyle.textContent = '.toggle .slider::before { background: #ffffff !important; }';
+  }
+
   // Bind toggles
   document.querySelectorAll('.toggle input[type="checkbox"]').forEach(el => {
     el.addEventListener('change', () => {
       sendUpdate(el.dataset.key, el.checked);
+      applyToggleColors();
     });
   });
+
+  // Apply colors on initial load
+  applyToggleColors();
 
   // Bind text/number inputs (debounced)
   let debounceTimers = {};
