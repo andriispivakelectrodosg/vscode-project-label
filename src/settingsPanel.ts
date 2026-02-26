@@ -190,9 +190,9 @@ export class SettingsPanel {
   .toggle .slider {
     position: absolute;
     inset: 0;
-    background: var(--input-border);
+    background: #f44336;
     border-radius: 22px;
-    transition: 0.2s;
+    transition: 0.25s;
   }
   .toggle .slider::before {
     content: '';
@@ -201,12 +201,12 @@ export class SettingsPanel {
     height: 16px;
     left: 3px;
     bottom: 3px;
-    background: var(--fg);
+    background: #fff;
     border-radius: 50%;
-    transition: 0.2s;
+    transition: 0.25s;
   }
   .toggle input:checked + .slider {
-    background: var(--accent);
+    background: #4caf50;
   }
   .toggle input:checked + .slider::before {
     transform: translateX(18px);
@@ -364,10 +364,27 @@ export class SettingsPanel {
   <div class="row">
     <div class="row-label">
       <span class="name">Icon</span>
-      <span class="desc">Codicon icon before the label (e.g. $(bracket-dot), $(folder))</span>
+      <span class="desc">Codicon icon displayed before the label</span>
     </div>
     <div class="row-control">
-      <input type="text" id="icon" data-key="icon" placeholder="$(bracket-dot)">
+      <select id="icon" data-key="icon">
+        <option value="$(bracket-dot)">$(bracket-dot) — Code</option>
+        <option value="$(folder)">$(folder) — Folder</option>
+        <option value="$(account)">$(account) — Profile</option>
+        <option value="$(rocket)">$(rocket) — Rocket</option>
+        <option value="$(zap)">$(zap) — Lightning</option>
+        <option value="$(heart)">$(heart) — Heart</option>
+        <option value="$(star-full)">$(star-full) — Star</option>
+        <option value="$(home)">$(home) — Home</option>
+        <option value="$(terminal)">$(terminal) — Terminal</option>
+        <option value="$(globe)">$(globe) — Globe</option>
+        <option value="$(beaker)">$(beaker) — Beaker</option>
+        <option value="$(tools)">$(tools) — Tools</option>
+        <option value="$(shield)">$(shield) — Shield</option>
+        <option value="$(tag)">$(tag) — Tag</option>
+        <option value="$(eye)">$(eye) — Eye</option>
+        <option value="">(none) — No icon</option>
+      </select>
     </div>
   </div>
 
@@ -449,10 +466,6 @@ export class SettingsPanel {
     </div>
   </div>
 
-  <div class="btn-row">
-    <button data-command="projectLabel.enableNativeTitleBar">Enable Native Title Bar</button>
-    <button class="btn-secondary" data-command="projectLabel.disableNativeTitleBar">Restore Custom Title Bar</button>
-  </div>
 </div>
 
 <!-- ── Copilot Section ──────────────── -->
@@ -472,10 +485,6 @@ export class SettingsPanel {
     </div>
   </div>
 
-  <div class="btn-row">
-    <button data-command="projectLabel.silenceCopilot">🔇 Silence Now</button>
-    <button class="btn-secondary" data-command="projectLabel.unsilenceCopilot">🔊 Restore Sounds</button>
-  </div>
 </div>
 
 <!-- ── Actions ──────────────────────── -->
@@ -511,12 +520,12 @@ export class SettingsPanel {
 
     setValue('customLabel', s.customLabel);
     setValue('separator', s.separator);
-    setValue('icon', s.icon);
     setValue('color', s.color);
     setValue('priority', s.priority);
     setValue('titleTemplate', s.titleTemplate);
 
     setSelect('alignment', s.alignment);
+    setSelect('icon', s.icon);
 
     // Sync color picker
     if (s.color && s.color.startsWith('#') && s.color.length === 7) {

@@ -5,6 +5,17 @@ All notable changes to the **Project Label** extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-02-26
+
+### Changed
+
+- Toggle switches now use **green** (#4caf50) for ON and **red** (#f44336) for OFF with white knob.
+- Icon selector changed from free-text input to **dropdown** with 16 predefined codicon options.
+
+### Removed
+
+- Redundant "Enable/Disable" button pairs under Title Bar and Copilot sections — toggles already reflect and control the state.
+
 ## [0.4.1] - 2026-02-26
 
 ### Fixed
