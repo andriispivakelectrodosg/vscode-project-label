@@ -5,6 +5,13 @@ All notable changes to the **Project Label** extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6] - 2026-02-26
+
+### Fixed
+
+- **Delayed sound notifications** — `setSilenceAllSounds()` now updates all 30+ signals in parallel (`Promise.all`) instead of sequentially, so they apply nearly instantly.
+- **Settings panel states after silence-all** — immediately pushes final signal states to webview after command completes (bypasses debounce).
+
 ## [0.5.5] - 2026-02-26
 
 ### Fixed

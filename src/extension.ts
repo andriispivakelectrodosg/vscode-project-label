@@ -496,13 +496,14 @@ async function setSilenceAllSounds(silent: boolean): Promise<void> {
     const signals = vscode.workspace.getConfiguration('accessibility.signals');
     const value = { sound: silent ? 'off' : 'on' };
 
-    for (const key of ALL_SOUND_SIGNALS) {
-        try {
-            await signals.update(key, value, vscode.ConfigurationTarget.Global);
-        } catch {
-            // Signal may not exist in this VS Code version — skip silently
-        }
-    }
+    // Update ALL signals in parallel so they apply nearly instantly
+    // instead of one-by-one (which causes delayed sound notifications).
+    await Promise.all(
+        ALL_SOUND_SIGNALS.map(key =>
+            signals.update(key, value, vscode.ConfigurationTarget.Global)
+                .then(undefined, () => { /* signal may not exist — skip */ })
+        )
+    );
 
     // Also sync our own setting (wrapped in try/catch — setting may not be
     // registered yet if VS Code hasn't fully reloaded after an upgrade).

@@ -60,8 +60,13 @@ export class SettingsPanel {
                             ? 'projectLabel.silenceAllSounds'
                             : 'projectLabel.unsilenceAllSounds';
                         await vscode.commands.executeCommand(cmd);
-                        // The debounced config-change listener will send
-                        // final states once all 30+ updates settle.
+                        // All parallel writes are done — cancel any pending
+                        // debounce and send final states immediately.
+                        if (this._signalDebounce) {
+                            clearTimeout(this._signalDebounce);
+                            this._signalDebounce = undefined;
+                        }
+                        this._doSendSignalStates();
                         break;
                     }
                     case 'requestSignals': {
