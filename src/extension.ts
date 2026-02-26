@@ -6,6 +6,7 @@ import { SettingsPanel } from './settingsPanel';
 import { ProjectLabelTreeProvider } from './treeViewProvider';
 
 let statusBarItem: vscode.StatusBarItem;
+let soundStatusBarItem: vscode.StatusBarItem;
 let cachedProfileName: string | undefined;
 let originalWindowTitle: string | undefined;
 let treeProvider: ProjectLabelTreeProvider;
@@ -20,6 +21,12 @@ export function activate(context: vscode.ExtensionContext): void {
     // Create status bar item based on current config
     statusBarItem = createStatusBarItem();
     context.subscriptions.push(statusBarItem);
+
+    // Create sound status bar item (right side, low priority so it's near the edge)
+    soundStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    soundStatusBarItem.command = 'projectLabel.toggleSilenceAllSounds';
+    context.subscriptions.push(soundStatusBarItem);
+    updateSoundStatusBar();
 
     // ── Tree View Sidebar ──
     treeProvider = new ProjectLabelTreeProvider();
@@ -116,6 +123,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 }
                 if (e.affectsConfiguration('projectLabel.silenceAllSounds')) {
                     applySilenceAllSoundsSetting();
+                    updateSoundStatusBar();
                 }
                 updateLabel();
                 treeProvider.refresh();
@@ -500,11 +508,35 @@ async function setSilenceAllSounds(silent: boolean): Promise<void> {
             ? '🔇 All VS Code sounds silenced.'
             : '🔊 All VS Code sounds restored.'
     );
+
+    updateSoundStatusBar();
+}
+
+// ── Sound Status Bar ─────────────────────────────────────────────
+
+function updateSoundStatusBar(): void {
+    const silent = vscode.workspace
+        .getConfiguration('projectLabel')
+        .get<boolean>('silenceAllSounds', false);
+
+    if (silent) {
+        soundStatusBarItem.text = '$(mute)';
+        soundStatusBarItem.tooltip = 'All sounds silenced — click to restore';
+        soundStatusBarItem.color = new vscode.ThemeColor('errorForeground');
+    } else {
+        soundStatusBarItem.text = '$(unmute)';
+        soundStatusBarItem.tooltip = 'Sounds enabled — click to silence all';
+        soundStatusBarItem.color = undefined;
+    }
+    soundStatusBarItem.show();
 }
 
 export function deactivate(): void {
     if (statusBarItem) {
         statusBarItem.dispose();
+    }
+    if (soundStatusBarItem) {
+        soundStatusBarItem.dispose();
     }
     // Restore original window title
     if (originalWindowTitle !== undefined) {

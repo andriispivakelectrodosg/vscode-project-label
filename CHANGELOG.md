@@ -5,6 +5,17 @@ All notable changes to the **Project Label** extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-02-26
+
+### Added
+
+- **Sound status icon in status bar** — shows `$(unmute)` when sounds are on, `$(mute)` (red) when silenced. Click to toggle.
+
+### Changed
+
+- Replaced fancy toggle switches with **plain native checkboxes** for reliable rendering in webview.
+- Removed all custom toggle CSS and inline JS color logic.
+
 ## [0.5.1] - 2026-02-26
 
 ### Fixed

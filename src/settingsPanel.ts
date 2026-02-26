@@ -187,34 +187,12 @@ export class SettingsPanel {
   .row-label .desc { opacity: 0.65; font-size: 0.9em; }
   .row-control { flex-shrink: 0; margin-left: 16px; }
 
-  /* Toggle switch */
-  .toggle {
-    position: relative;
-    display: inline-block;
-    width: 40px;
-    height: 22px;
+  /* Checkbox */
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
     cursor: pointer;
-    flex-shrink: 0;
-  }
-  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
-  .toggle .slider {
-    position: absolute;
-    inset: 0;
-    border-radius: 22px;
-    transition: background 0.25s;
-  }
-  .toggle .slider::before {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    left: 3px;
-    bottom: 3px;
-    border-radius: 50%;
-    transition: transform 0.25s;
-  }
-  .toggle input:checked + .slider::before {
-    transform: translateX(18px);
+    accent-color: var(--accent);
   }
 
   /* Inputs */
@@ -301,10 +279,7 @@ export class SettingsPanel {
       <span class="desc">Display the workspace folder name in the label</span>
     </div>
     <div class="row-control">
-      <label class="toggle">
-        <input type="checkbox" id="showProjectName" data-key="showProjectName">
-        <span class="slider"></span>
-      </label>
+      <input type="checkbox" id="showProjectName" data-key="showProjectName">
     </div>
   </div>
 
@@ -314,10 +289,7 @@ export class SettingsPanel {
       <span class="desc">Display the VS Code profile name in the label</span>
     </div>
     <div class="row-control">
-      <label class="toggle">
-        <input type="checkbox" id="showProfile" data-key="showProfile">
-        <span class="slider"></span>
-      </label>
+      <input type="checkbox" id="showProfile" data-key="showProfile">
     </div>
   </div>
 
@@ -327,10 +299,7 @@ export class SettingsPanel {
       <span class="desc">Display the label in the status bar at the bottom</span>
     </div>
     <div class="row-control">
-      <label class="toggle">
-        <input type="checkbox" id="showInStatusBar" data-key="showInStatusBar">
-        <span class="slider"></span>
-      </label>
+      <input type="checkbox" id="showInStatusBar" data-key="showInStatusBar">
     </div>
   </div>
 
@@ -440,10 +409,7 @@ export class SettingsPanel {
       <span class="desc">Inject project label into VS Code window title</span>
     </div>
     <div class="row-control">
-      <label class="toggle">
-        <input type="checkbox" id="updateWindowTitle" data-key="updateWindowTitle">
-        <span class="slider"></span>
-      </label>
+      <input type="checkbox" id="updateWindowTitle" data-key="updateWindowTitle">
     </div>
   </div>
 
@@ -464,10 +430,7 @@ export class SettingsPanel {
       <span class="desc">Required on Linux to see window title text. Requires restart.</span>
     </div>
     <div class="row-control">
-      <label class="toggle">
-        <input type="checkbox" id="useNativeTitleBar" data-key="useNativeTitleBar">
-        <span class="slider"></span>
-      </label>
+      <input type="checkbox" id="useNativeTitleBar" data-key="useNativeTitleBar">
     </div>
   </div>
 
@@ -483,10 +446,7 @@ export class SettingsPanel {
       <span class="desc">Mute all GitHub Copilot Chat accessibility sound notifications</span>
     </div>
     <div class="row-control">
-      <label class="toggle">
-        <input type="checkbox" id="silenceCopilotChat" data-key="silenceCopilotChat">
-        <span class="slider"></span>
-      </label>
+      <input type="checkbox" id="silenceCopilotChat" data-key="silenceCopilotChat">
     </div>
   </div>
 
@@ -501,10 +461,7 @@ export class SettingsPanel {
       <span class="desc">Disable every accessibility sound signal in VS Code (editor, terminal, tasks, diff, notebook, etc.)</span>
     </div>
     <div class="row-control">
-      <label class="toggle">
-        <input type="checkbox" id="silenceAllSounds" data-key="silenceAllSounds">
-        <span class="slider"></span>
-      </label>
+      <input type="checkbox" id="silenceAllSounds" data-key="silenceAllSounds">
     </div>
   </div>
 
@@ -557,7 +514,6 @@ export class SettingsPanel {
     }
 
     updatePreview(s);
-    applyToggleColors();
   }
 
   function setCheck(id, val) {
@@ -597,37 +553,12 @@ export class SettingsPanel {
     vscode.postMessage({ type: 'runCommand', command: cmd });
   }
 
-  // ── Apply toggle colors via inline styles (immune to VS Code webview overrides) ──
-  function applyToggleColors() {
-    document.querySelectorAll('.toggle').forEach(label => {
-      const input = label.querySelector('input[type="checkbox"]');
-      const slider = label.querySelector('.slider');
-      if (!input || !slider) return;
-      slider.style.background = input.checked ? '#4caf50' : '#f44336';
-      slider.style.setProperty('background', input.checked ? '#4caf50' : '#f44336', 'important');
-      // Style the knob via ::before — can't do inline, so use outline trick
-      // Actually set a CSS custom property and use it
-    });
-    // Force knob color via a dynamic style tag
-    let knobStyle = document.getElementById('toggle-knob-style');
-    if (!knobStyle) {
-      knobStyle = document.createElement('style');
-      knobStyle.id = 'toggle-knob-style';
-      document.head.appendChild(knobStyle);
-    }
-    knobStyle.textContent = '.toggle .slider::before { background: #ffffff !important; }';
-  }
-
-  // Bind toggles
-  document.querySelectorAll('.toggle input[type="checkbox"]').forEach(el => {
+  // Bind checkboxes
+  document.querySelectorAll('input[type="checkbox"][data-key]').forEach(el => {
     el.addEventListener('change', () => {
       sendUpdate(el.dataset.key, el.checked);
-      applyToggleColors();
     });
   });
-
-  // Apply colors on initial load
-  applyToggleColors();
 
   // Bind text/number inputs (debounced)
   let debounceTimers = {};
