@@ -498,12 +498,18 @@ async function setSilenceAllSounds(silent: boolean): Promise<void> {
         }
     }
 
-    // Also sync our own setting
-    await vscode.workspace.getConfiguration('projectLabel').update(
-        'silenceAllSounds',
-        silent,
-        vscode.ConfigurationTarget.Global
-    );
+    // Also sync our own setting (wrapped in try/catch — setting may not be
+    // registered yet if VS Code hasn't fully reloaded after an upgrade).
+    try {
+        await vscode.workspace.getConfiguration('projectLabel').update(
+            'silenceAllSounds',
+            silent,
+            vscode.ConfigurationTarget.Global
+        );
+    } catch {
+        // Silently ignore — the actual accessibility.signals writes above
+        // already took effect, and the setting will sync on next reload.
+    }
 
     vscode.window.showInformationMessage(
         silent
@@ -517,9 +523,24 @@ async function setSilenceAllSounds(silent: boolean): Promise<void> {
 // ── Sound Status Bar ─────────────────────────────────────────────
 
 function updateSoundStatusBar(): void {
-    const silent = vscode.workspace
-        .getConfiguration('projectLabel')
-        .get<boolean>('silenceAllSounds', false);
+    // Check the actual accessibility.signals state as ground truth,
+    // falling back to the projectLabel setting.
+    let silent = false;
+    try {
+        silent = vscode.workspace
+            .getConfiguration('projectLabel')
+            .get<boolean>('silenceAllSounds', false);
+    } catch { /* ignore */ }
+
+    // Double-check: if at least a few key signals are "off", treat as silenced
+    // even if projectLabel.silenceAllSounds wasn't persisted.
+    try {
+        const sig = vscode.workspace.getConfiguration('accessibility.signals');
+        const sample = sig.get<{ sound?: string }>('chatResponseReceived');
+        if (sample && sample.sound === 'off') {
+            silent = true;
+        }
+    } catch { /* ignore */ }
 
     if (silent) {
         soundStatusBarItem.text = '$(mute)';

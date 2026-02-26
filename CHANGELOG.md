@@ -5,6 +5,20 @@ All notable changes to the **Project Label** extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.4] - 2026-02-26
+
+### Fixed
+
+- **Master "Silence ALL" checkbox** now correctly toggles every individual signal checkbox (visual + backend).
+- **Status bar sound button** no longer shows "not a registered configuration" error — `setSilenceAllSounds` now wraps the config write in try/catch.
+- **Sound status bar** now cross-checks actual `accessibility.signals` state as ground truth.
+- Individual signal checkbox changes sync the master checkbox state (checked only when all are checked).
+
+### Changed
+
+- Master checkbox sends dedicated `silenceAll` message instead of generic `updateSetting`.
+- Removed stale extension versions (0.1.0, 0.4.1, 0.4.2) that could interfere with setting registration.
+
 ## [0.5.3] - 2026-02-26
 
 ### Added

@@ -55,6 +55,15 @@ export class SettingsPanel {
                         } catch { /* signal may not exist */ }
                         break;
                     }
+                    case 'silenceAll': {
+                        const cmd = msg.value
+                            ? 'projectLabel.silenceAllSounds'
+                            : 'projectLabel.unsilenceAllSounds';
+                        await vscode.commands.executeCommand(cmd);
+                        // After the command updates all signals, push new states to webview
+                        this._sendSignalStates();
+                        break;
+                    }
                     case 'requestSignals': {
                         this._sendSignalStates();
                         break;
@@ -495,7 +504,7 @@ export class SettingsPanel {
       <span class="desc">Master switch — mute/unmute every sound signal at once</span>
     </div>
     <div class="row-control">
-      <input type="checkbox" id="silenceAllSounds" data-key="silenceAllSounds">
+      <input type="checkbox" id="silenceAllSounds">
     </div>
   </div>
 
@@ -638,19 +647,39 @@ export class SettingsPanel {
     vscode.postMessage({ type: 'runCommand', command: cmd });
   }
 
-  // Bind checkboxes
+  // Bind checkboxes (generic settings)
   document.querySelectorAll('input[type="checkbox"][data-key]').forEach(el => {
     el.addEventListener('change', () => {
       sendUpdate(el.dataset.key, el.checked);
     });
   });
 
+  // Bind master "Silence ALL" checkbox (no data-key — uses dedicated handler)
+  const masterCb = document.getElementById('silenceAllSounds');
+  if (masterCb) {
+    masterCb.addEventListener('change', () => {
+      const silent = masterCb.checked;
+      // Visually toggle every signal checkbox immediately
+      document.querySelectorAll('.signal-cb').forEach(cb => { cb.checked = silent; });
+      // Tell the extension to run the silence/unsilence command
+      vscode.postMessage({ type: 'silenceAll', value: silent });
+    });
+  }
+
   // Bind individual signal checkboxes
   document.querySelectorAll('.signal-cb').forEach(el => {
     el.addEventListener('change', () => {
       vscode.postMessage({ type: 'updateSignal', signal: el.dataset.signal, value: el.checked });
+      // Sync master checkbox: checked only if ALL signals are checked
+      syncMasterCheckbox();
     });
   });
+
+  function syncMasterCheckbox() {
+    const all = document.querySelectorAll('.signal-cb');
+    const allChecked = Array.from(all).every(cb => cb.checked);
+    if (masterCb) masterCb.checked = allChecked;
+  }
 
   function applySignalStates(states) {
     document.querySelectorAll('.signal-cb').forEach(el => {
@@ -659,6 +688,7 @@ export class SettingsPanel {
         el.checked = states[key];
       }
     });
+    syncMasterCheckbox();
   }
 
   // Bind text/number inputs (debounced)
